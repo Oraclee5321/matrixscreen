@@ -1,0 +1,9 @@
+getEnergy()          : Function
+canExtract()         : Function
+getInput()           : Function
+getMaxEnergyStored() : Function
+getMaxEnergy()       : Function
+getTransferCap()     : Function
+getOutput()          : Function
+getEnergyStored()    : Function
+canRecieve()         : Function
