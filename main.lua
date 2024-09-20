@@ -26,13 +26,13 @@ local gpu = component.gpu
 local w,h = gpu.getResolution()
 
 
-local pbarleft = charts.Container {
+local pbar = charts.Container {
     x = 1,
     y = 1,
     width = 50,
     height = 2,
     payload = charts.ProgressBar{
-        direction = charts.sides.LEFT,
+        direction = charts.sides.RIGHT,
         max = getMaxPower(matrix),
         value=getCurrentPower(matrix),
         colorFunc = function(_, perc)
@@ -53,34 +53,21 @@ local pbarleft = charts.Container {
     }
 }
 
-local pbarright = charts.Container {
-    x = 1,
-    y = 4,
-    width = 50,
-    height = 2,
-    payload = charts.ProgressBar {
-      direction = charts.sides.RIGHT,
-      value = 0,
-      colorFunc = cleft.payload.colorFunc
-    }
-  }
-  local energy = getCurrentPower(matrix)
-  term.clear()
-  pbarleft.gpu.set(5, 10, "Value: " .. ("%.2f"):format(energy / 100) .. " [" .. ("%3d"):format(energy) .. "%]")
-  pbarleft.gpu.set(5, 11, "Max:   " .. pbarleft.payload.min)
-  pbarleft.gpu.set(5, 12, "Min:   " .. pbarleft.payload.max)
+local energy = getCurrentPower(matrix)
+term.clear()
+pbar.gpu.set(5, 10, "Current Power: " .. ("%.2f"):format(energy)
+pbar.gpu.set(5, 11, "Max:   " .. pbar.payload.max)
 
-  cleft.payload.value, cright.payload.value = energy / 100, energy / 100
+pbar.payload.value = energy
 
-  pbarleft:draw()
-  pbaright:draw()
+pbar:draw()
 
-  if event.pull(0.05, "interrupted") then
-      term.clear()
-      os.exit()
-  end
+if event.pull(0.05, "interrupted") then
+    term.clear()
+    os.exit()
+end
 
-  event.pull("interrupted")
-  term.clear()
+event.pull("interrupted")
+term.clear()
 
 
