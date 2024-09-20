@@ -10,7 +10,7 @@ end
 function getCurrentPower (matrix)
     local storedpower = component.invoke(matrix,"getEnergy") -- Gets energy stored in EU
     storedpower = storedpower * 4 -- Convert to RF
-    return storedpowwer
+    return storedpower
 end
 
 function getMaxPower (matrix)
@@ -64,50 +64,23 @@ local pbarright = charts.Container {
       colorFunc = cleft.payload.colorFunc
     }
   }
+  local energy = getCurrentPower(matrix)
+  term.clear()
+  pbarleft.gpu.set(5, 10, "Value: " .. ("%.2f"):format(energy / 100) .. " [" .. ("%3d"):format(energy) .. "%]")
+  pbarleft.gpu.set(5, 11, "Max:   " .. pbarleft.payload.min)
+  pbarleft.gpu.set(5, 12, "Min:   " .. pbarleft.payload.max)
 
-  local pbartop = charts.Container {
-    x = 55,
-    y = 1,
-    width = 2,
-    height = 20,
-    payload = charts.ProgressBar {
-      direction = charts.sides.TOP,
-      value = 0,
-      colorFunc = cleft.payload.colorFunc
-    }
-  }
+  cleft.payload.value, cright.payload.value = energy / 100, energy / 100
 
-  local pbarbottom = charts.Container {
-    x = 59,
-    y = 1,
-    width = 2,
-    height = 20,
-    payload = charts.ProgressBar {
-      direction = charts.sides.BOTTOM,
-      value = 0,
-      colorFunc = cleft.payload.colorFunc
-    }
-  }
-  for i = 0, 100, 1 do
+  pbarleft:draw()
+  pbaright:draw()
+
+  if event.pull(0.05, "interrupted") then
       term.clear()
-      cleft.gpu.set(5, 10, "Value: " .. ("%.2f"):format(i / 100) .. " [" .. ("%3d"):format(i) .. "%]")
-      cleft.gpu.set(5, 11, "Max:   " .. cleft.payload.min)
-      cleft.gpu.set(5, 12, "Min:   " .. cleft.payload.max)
+      os.exit()
+  end
 
-      cleft.payload.value, cright.payload.value, ctop.payload.value, cbottom.payload.value = i / 100, i / 100, i / 100, i / 100
-
-      cleft:draw()
-      ctop:draw()
-      cright:draw()
-      cbottom:draw()
-
-      if event.pull(0.05, "interrupted") then
-        term.clear()
-        os.exit()
-      end
-    end
-
-    event.pull("interrupted")
-    term.clear()
+  event.pull("interrupted")
+  term.clear()
 
 
