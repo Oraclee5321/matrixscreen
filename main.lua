@@ -7,6 +7,25 @@ function getMatrix ()
     return maddress
 end
 
+function getInput(matrix)
+    local input = components.invoke(matrix,"getInput")
+    input = input * 4
+    return input
+end
+
+function getOutput(matrix)
+    local output = components.invoke(matrix,"getOutput")
+    output = output * 4
+    return output
+end
+
+function getDeviation(matrix)
+    local input = getInput(matrix)
+    local output = getOutput(matrix)
+    local deviation = input - output
+    return deviation
+end
+
 function getCurrentPower (matrix)
     local storedpower = components.invoke(matrix,"getEnergy") -- Gets energy stored in EU
     storedpower = storedpower * 4 -- Convert to RF
@@ -19,16 +38,47 @@ function getMaxPower (matrix)
     return maxpower
 end
 
-function drawData(matrix,term,pbar)
-    local energy = getCurrentPower(matrix)
-    term.clear()
-    pbar.gpu.set(5, 10, "Current Power: " .. ("%.2f"):format(energy))
-    pbar.gpu.set(5, 11, "          Max: " .. pbar.payload.max)
+function drawData(energy,pbar)
+    pbar.gpu.set(5, 9, "   Percentage: " .. string.format("%.0f",(energy / pbar.payload.max)*100) .. "%")
+    pbar.gpu.set(5, 10, "Current Power: " .. energy .. " RF")
+    pbar.gpu.set(5, 11, "          Max: " .. pbar.payload.max .. " RF")
+
 
     pbar.payload.value = energy
-
-    pbar:draw()
 end
+
+function energyDeviation(matrix,pbar)
+    local deviation = getDeviation(matrix)
+    if deviation < 0 then
+        pbar.gpu.set(5, 12, "  Energy Loss: " .. deviation .. " RF")
+    else
+        pbar.gpu.set(5, 12, "  Energy Gain: +" .. deviation .. " RF")
+    end
+end
+
+function timeEstimate(matrix,pbar,energy)
+    local deviation = getDeviation(matrix)
+    local a = 0
+    if deviation == nil or deviation == 0 then
+        return
+    end
+
+    if deviation < 0 then
+        a = (((pbar.payload.max + energy)/ deviation) /20) / 60
+    else
+        a = (((pbar.payload.max - energy)/ deviation) /20) / 60
+    end
+    if deviation < 0 then
+        pbar.gpu.set(5, 13, "    Time Left: " .. string.format("%.1f",a * -1) .. " Min")
+    else
+        pbar.gpu.set(5, 13, "  Time To Fill: " .. string.format("%.1f",a) .. " Min")
+    end
+end
+
+
+
+
+
 
 local charts = require("charts")
 local term = require("term")
@@ -67,7 +117,12 @@ local pbar = charts.Container {
 
 
 repeat
-    drawData(matrix,term,pbar)
+    term.clear()
+    local energy = getCurrentPower(matrix)
+    drawData(energy,pbar)
+    energyDeviation(matrix,pbar)
+    timeEstimate(matrix,pbar,energy)
+    pbar:draw()
 until
     event.pull(0.05, "interrupted")
 
